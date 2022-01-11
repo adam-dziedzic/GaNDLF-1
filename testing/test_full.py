@@ -1048,7 +1048,6 @@ def test_checkpointing_segmentation_rad_2d(device):
 
 
 def test_model_patch_divisibility():
-
     parameters = parseConfig(
         testingDir + "/config_segmentation.yaml", version_check_flag=False
     )
@@ -1081,7 +1080,6 @@ def test_model_patch_divisibility():
 
 
 def test_one_hot_logic():
-
     random_array = np.random.randint(5, size=(20, 20, 20))
     img = sitk.GetImageFromArray(random_array)
     img_array = sitk.GetArrayFromImage(img)
@@ -1116,26 +1114,23 @@ def test_one_hot_logic():
     print("passed")
 
 
-def test_differential_privacy_simple_segmentation_rad_2d(device):
-    print("Starting 2D Rad segmentation tests for metrics")
-    # read and parse csv
+def test_differential_privacy_simple_classification_rad_2d(device):
+    # read and initialize parameters for specific data dimension
     parameters = parseConfig(
-        testingDir + "/config_segmentation.yaml", version_check_flag=False
+        testingDir + "/config_classification.yaml", version_check_flag=False
     )
+    parameters["modality"] = "rad"
+    parameters["patch_size"] = patch_size["2D"]
+    parameters["model"]["dimension"] = 2
+    parameters["model"]["amp"] = True
+    # read and parse csv
     training_data, parameters["headers"] = parseTrainingCSV(
-        inputDir + "/train_2d_rad_segmentation.csv"
+        inputDir + "/train_2d_rad_classification.csv"
     )
     parameters = populate_header_in_parameters(parameters, parameters["headers"])
-    parameters["patch_size"] = patch_size["2D"]
-    parameters["num_epochs"] = 1
-    parameters["nested_training"]["testing"] = 1
-    parameters["model"]["dimension"] = 2
-    parameters["model"]["class_list"] = [0, 255]
-    parameters["model"]["amp"] = True
-    parameters["differential_privacy"] = True
     parameters["model"]["num_channels"] = 3
-    parameters["metrics"] = ["dice"]
-    parameters["model"]["architecture"] = "unet"
+    parameters["model"]["norm_type"] = "instance"
+    parameters["differential_privacy"] = True
     file_config_temp = os.path.join(testingDir, "config_segmentation_temp.yaml")
     # if found in previous run, discard.
     if os.path.exists(file_config_temp):
@@ -1144,6 +1139,7 @@ def test_differential_privacy_simple_segmentation_rad_2d(device):
     with open(file_config_temp, "w") as file:
         yaml.dump(parameters, file)
     parameters = parseConfig(file_config_temp, version_check_flag=True)
+    shutil.rmtree(outputDir)  # overwrite previous results
     Path(outputDir).mkdir(parents=True, exist_ok=True)
     TrainingManager(
         dataframe=training_data,
@@ -1157,28 +1153,23 @@ def test_differential_privacy_simple_segmentation_rad_2d(device):
     print("passed")
 
 
-def test_differential_privacy_epsilon_segmentation_rad_2d(device):
-    print("Starting 2D Rad segmentation tests for metrics")
-    # read and parse csv
+def test_differential_privacy_epsilon_classification_rad_2d(device):
+    # read and initialize parameters for specific data dimension
     parameters = parseConfig(
-        testingDir + "/config_segmentation.yaml", version_check_flag=False
+        testingDir + "/config_classification.yaml", version_check_flag=False
     )
+    parameters["modality"] = "rad"
+    parameters["patch_size"] = patch_size["2D"]
+    parameters["model"]["dimension"] = 2
+    parameters["model"]["amp"] = True
+    # read and parse csv
     training_data, parameters["headers"] = parseTrainingCSV(
-        inputDir + "/train_2d_rad_segmentation.csv"
+        inputDir + "/train_2d_rad_classification.csv"
     )
     parameters = populate_header_in_parameters(parameters, parameters["headers"])
-    parameters["patch_size"] = patch_size["2D"]
-    parameters["num_epochs"] = 1
-    parameters["nested_training"]["testing"] = 1
-    parameters["model"]["dimension"] = 2
-    parameters["model"]["class_list"] = [0, 255]
-    parameters["model"]["amp"] = True
     parameters["model"]["num_channels"] = 3
-    parameters["metrics"] = ["dice"]
-    parameters["model"]["architecture"] = "unet"
+    parameters["model"]["norm_type"] = "instance"
     parameters["differential_privacy"] = {"epsilon": 25.0}
-    parameters["nested_training"]["validation"] = -2
-    parameters["nested_training"]["testing"] = 1
     file_config_temp = os.path.join(testingDir, "config_segmentation_temp.yaml")
     # if found in previous run, discard.
     if os.path.exists(file_config_temp):
@@ -1187,6 +1178,7 @@ def test_differential_privacy_epsilon_segmentation_rad_2d(device):
     with open(file_config_temp, "w") as file:
         yaml.dump(parameters, file)
     parameters = parseConfig(file_config_temp, version_check_flag=True)
+    shutil.rmtree(outputDir)  # overwrite previous results
 
     TrainingManager(
         dataframe=training_data,
