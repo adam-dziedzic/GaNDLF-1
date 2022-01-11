@@ -596,7 +596,7 @@ def parseConfig(config_file_path, version_check_flag=True):
         temp_dict["type"] = params["optimizer"]
         params["optimizer"] = temp_dict
 
-    if (params["differential_privacy"] is not None) or (params["differential_privacy"] != False):
+    if not(params["differential_privacy"] in [None, False]):
         if not isinstance(params["differential_privacy"], dict):
             print("WARNING: The key 'differential_privacy' should be a dictionary")
             params["differential_privacy"] = {}
@@ -618,14 +618,12 @@ def parseConfig(config_file_path, version_check_flag=True):
             params["differential_privacy"], "secure_mode", False
         )
         # this is required when epsilon is defined
-        params["differential_privacy"] = initialize_key(
-            params["differential_privacy"], "delta", 1e-5
-        )
-        params["differential_privacy"] = initialize_key(
-            params["differential_privacy"], "epochs", 20
-        )
-        params["differential_privacy"] = initialize_key(
-            params["differential_privacy"], "epsilon", 50.0
-        )
+        if "epsilon" in params["differential_privacy"]:
+            params["differential_privacy"] = initialize_key(
+                params["differential_privacy"], "delta", 1e-5
+            )
+            params["differential_privacy"] = initialize_key(
+                params["differential_privacy"], "epochs", 20
+            )
 
     return params
