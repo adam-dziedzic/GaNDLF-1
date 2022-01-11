@@ -1132,10 +1132,18 @@ def test_differential_privacy_simple_segmentation_rad_2d(device):
     parameters["model"]["dimension"] = 2
     parameters["model"]["class_list"] = [0, 255]
     parameters["model"]["amp"] = True
-    parameters["model"]["differential_privacy"] = True
+    parameters["differential_privacy"] = True
     parameters["model"]["num_channels"] = 3
     parameters["metrics"] = ["dice"]
     parameters["model"]["architecture"] = "unet"
+    file_config_temp = os.path.join(testingDir, "config_segmentation_temp.yaml")
+    # if found in previous run, discard.
+    if os.path.exists(file_config_temp):
+        os.remove(file_config_temp)
+
+    with open(file_config_temp, "w") as file:
+        yaml.dump(parameters, file)
+    parameters = parseConfig(file_config_temp, version_check_flag=True)
     Path(outputDir).mkdir(parents=True, exist_ok=True)
     TrainingManager(
         dataframe=training_data,
@@ -1168,9 +1176,18 @@ def test_differential_privacy_epsilon_segmentation_rad_2d(device):
     parameters["model"]["num_channels"] = 3
     parameters["metrics"] = ["dice"]
     parameters["model"]["architecture"] = "unet"
-    parameters["model"]["differential_privacy"] = {"epsilon": 25.0}
+    parameters["differential_privacy"] = {"epsilon": 25.0}
     parameters["nested_training"]["validation"] = -2
     parameters["nested_training"]["testing"] = 1
+    file_config_temp = os.path.join(testingDir, "config_segmentation_temp.yaml")
+    # if found in previous run, discard.
+    if os.path.exists(file_config_temp):
+        os.remove(file_config_temp)
+
+    with open(file_config_temp, "w") as file:
+        yaml.dump(parameters, file)
+    parameters = parseConfig(file_config_temp, version_check_flag=True)
+
     TrainingManager(
         dataframe=training_data,
         outputDir=outputDir,
