@@ -1114,3 +1114,70 @@ def test_one_hot_logic():
     comparison = (random_array == 4) == img_tensor_oh_rev_array_sp
     assert comparison.all(), "Arrays at '4' are not equal"
     print("passed")
+
+
+def test_differential_privacy_simple_segmentation_rad_2d(device):
+    print("Starting 2D Rad segmentation tests for metrics")
+    # read and parse csv
+    parameters = parseConfig(
+        testingDir + "/config_segmentation.yaml", version_check_flag=False
+    )
+    training_data, parameters["headers"] = parseTrainingCSV(
+        inputDir + "/train_2d_rad_segmentation.csv"
+    )
+    parameters = populate_header_in_parameters(parameters, parameters["headers"])
+    parameters["patch_size"] = patch_size["2D"]
+    parameters["num_epochs"] = 1
+    parameters["nested_training"]["testing"] = 1
+    parameters["model"]["dimension"] = 2
+    parameters["model"]["class_list"] = [0, 255]
+    parameters["model"]["amp"] = True
+    parameters["model"]["differential_privacy"] = True
+    parameters["model"]["num_channels"] = 3
+    parameters["metrics"] = ["dice"]
+    parameters["model"]["architecture"] = "unet"
+    Path(outputDir).mkdir(parents=True, exist_ok=True)
+    TrainingManager(
+        dataframe=training_data,
+        outputDir=outputDir,
+        parameters=parameters,
+        device=device,
+        reset_prev=True,
+    )
+    shutil.rmtree(outputDir)  # overwrite previous results
+
+    print("passed")
+
+
+def test_differential_privacy_epsilon_segmentation_rad_2d(device):
+    print("Starting 2D Rad segmentation tests for metrics")
+    # read and parse csv
+    parameters = parseConfig(
+        testingDir + "/config_segmentation.yaml", version_check_flag=False
+    )
+    training_data, parameters["headers"] = parseTrainingCSV(
+        inputDir + "/train_2d_rad_segmentation.csv"
+    )
+    parameters = populate_header_in_parameters(parameters, parameters["headers"])
+    parameters["patch_size"] = patch_size["2D"]
+    parameters["num_epochs"] = 1
+    parameters["nested_training"]["testing"] = 1
+    parameters["model"]["dimension"] = 2
+    parameters["model"]["class_list"] = [0, 255]
+    parameters["model"]["amp"] = True
+    parameters["model"]["num_channels"] = 3
+    parameters["metrics"] = ["dice"]
+    parameters["model"]["architecture"] = "unet"
+    parameters["model"]["differential_privacy"] = {"epsilon": 25.0}
+    parameters["nested_training"]["validation"] = -2
+    parameters["nested_training"]["testing"] = 1
+    TrainingManager(
+        dataframe=training_data,
+        outputDir=outputDir,
+        parameters=parameters,
+        device=device,
+        reset_prev=False,
+    )
+    shutil.rmtree(outputDir)  # overwrite previous results
+
+    print("passed")
