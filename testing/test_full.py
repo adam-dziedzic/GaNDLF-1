@@ -1139,8 +1139,10 @@ def test_differential_privacy_simple_classification_rad_2d(device):
     with open(file_config_temp, "w") as file:
         yaml.dump(parameters, file)
     parameters = parseConfig(file_config_temp, version_check_flag=True)
-    shutil.rmtree(outputDir)  # overwrite previous results
+    if os.path.exists(outputDir):
+        shutil.rmtree(outputDir)  # overwrite previous results
     Path(outputDir).mkdir(parents=True, exist_ok=True)
+    
     TrainingManager(
         dataframe=training_data,
         outputDir=outputDir,
@@ -1178,7 +1180,9 @@ def test_differential_privacy_epsilon_classification_rad_2d(device):
     with open(file_config_temp, "w") as file:
         yaml.dump(parameters, file)
     parameters = parseConfig(file_config_temp, version_check_flag=True)
-    shutil.rmtree(outputDir)  # overwrite previous results
+    if os.path.exists(outputDir):
+        shutil.rmtree(outputDir)  # overwrite previous results
+    Path(outputDir).mkdir(parents=True, exist_ok=True)
 
     TrainingManager(
         dataframe=training_data,
