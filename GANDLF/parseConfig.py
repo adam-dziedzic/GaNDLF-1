@@ -25,6 +25,7 @@ parameter_defaults = {
     "clip_grad": None,  # clip_gradient value
     "track_memory_usage": False,  # default memory tracking
     "print_rgb_label_warning": True,  # default memory tracking
+    "differential_privacy": None,  # default memory tracking
 }
 
 ## dictionary to define string defaults for appropriate options
@@ -594,5 +595,21 @@ def parseConfig(config_file_path, version_check_flag=True):
         temp_dict = {}
         temp_dict["type"] = params["optimizer"]
         params["optimizer"] = temp_dict
+
+    if params["differential_privacy"] is not None:
+        if not isinstance(params["differential_privacy"], dict):
+            print("WARNING: The key 'differential_privacy' should be a dictionary")
+            params["differential_privacy"] = {}
+        # these are some defaults
+        if "noise_multiplier" in params["differential_privacy"]:
+            params["differential_privacy"]["sigma"] = params["differential_privacy"]["noise_multiplier"]
+        params["differential_privacy"] = initialize_key(params["differential_privacy"], "sigma", 1.0)
+        params["differential_privacy"] = initialize_key(params["differential_privacy"], "max_grad_norm", 1.0)
+        params["differential_privacy"] = initialize_key(params["differential_privacy"], "accountant", "rdp")
+        params["differential_privacy"] = initialize_key(params["differential_privacy"], "secure_mode", False)
+        # this is required when epsilon is defined
+        params["differential_privacy"] = initialize_key(params["differential_privacy"], "delta", 1e-5)
+        params["differential_privacy"] = initialize_key(params["differential_privacy"], "epochs", 20)
+        params["differential_privacy"] = initialize_key(params["differential_privacy"], "epsilon", 50.0)
 
     return params
