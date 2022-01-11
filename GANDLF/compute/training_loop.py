@@ -368,7 +368,7 @@ def training_loop(
 
     print("Using device:", device, flush=True)
 
-    if params["differential_privacy"] is not None:
+    if not(params["differential_privacy"] in [None, False]):
         from opacus import PrivacyEngine
 
         print("Using differential privacy")
@@ -394,7 +394,6 @@ def training_loop(
                 module=model,
                 optimizer=optimizer,
                 data_loader=train_dataloader,
-                noise_multiplier=params["differential_privacy"]["sigma"],
                 max_grad_norm=params["differential_privacy"]["max_grad_norm"],
                 epochs=params["differential_privacy"]["epochs"],
                 target_epsilon=params["differential_privacy"]["epsilon"],
