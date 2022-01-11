@@ -372,7 +372,10 @@ def training_loop(
         from opacus import PrivacyEngine
 
         print("Using differential privacy")
-        privacy_engine = PrivacyEngine(accountant=params["differential_privacy"]["accountant"], secure_mode=params["differential_privacy"]["secure_mode"])
+        privacy_engine = PrivacyEngine(
+            accountant=params["differential_privacy"]["accountant"],
+            secure_mode=params["differential_privacy"]["secure_mode"],
+        )
 
         if not "epsilon" in params["differential_privacy"]:
             model, optimizer, train_dataloader = privacy_engine.make_private(
@@ -383,7 +386,11 @@ def training_loop(
                 max_grad_norm=params["differential_privacy"]["max_grad_norm"],
             )
         else:
-            model, optimizer, train_dataloader = privacy_engine.make_private_with_epsilon(
+            (
+                model,
+                optimizer,
+                train_dataloader,
+            ) = privacy_engine.make_private_with_epsilon(
                 module=model,
                 optimizer=optimizer,
                 data_loader=train_dataloader,
@@ -393,7 +400,6 @@ def training_loop(
                 target_epsilon=params["differential_privacy"]["epsilon"],
                 target_delta=params["differential_privacy"]["delta"],
             )
-
 
     # Iterate for number of epochs
     for epoch in range(start_epoch, epochs):

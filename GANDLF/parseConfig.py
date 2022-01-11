@@ -602,14 +602,30 @@ def parseConfig(config_file_path, version_check_flag=True):
             params["differential_privacy"] = {}
         # these are some defaults
         if "noise_multiplier" in params["differential_privacy"]:
-            params["differential_privacy"]["sigma"] = params["differential_privacy"]["noise_multiplier"]
-        params["differential_privacy"] = initialize_key(params["differential_privacy"], "sigma", 1.0)
-        params["differential_privacy"] = initialize_key(params["differential_privacy"], "max_grad_norm", 1.0)
-        params["differential_privacy"] = initialize_key(params["differential_privacy"], "accountant", "rdp")
-        params["differential_privacy"] = initialize_key(params["differential_privacy"], "secure_mode", False)
+            params["differential_privacy"]["sigma"] = params["differential_privacy"][
+                "noise_multiplier"
+            ]
+        params["differential_privacy"] = initialize_key(
+            params["differential_privacy"], "sigma", 1.0
+        )
+        params["differential_privacy"] = initialize_key(
+            params["differential_privacy"], "max_grad_norm", 1.0
+        )
+        params["differential_privacy"] = initialize_key(
+            params["differential_privacy"], "accountant", "rdp"
+        )
+        params["differential_privacy"] = initialize_key(
+            params["differential_privacy"], "secure_mode", False
+        )
         # this is required when epsilon is defined
-        params["differential_privacy"] = initialize_key(params["differential_privacy"], "delta", 1e-5)
-        params["differential_privacy"] = initialize_key(params["differential_privacy"], "epochs", 20)
-        params["differential_privacy"] = initialize_key(params["differential_privacy"], "epsilon", 50.0)
+        params["differential_privacy"] = initialize_key(
+            params["differential_privacy"], "delta", 1e-5
+        )
+        params["differential_privacy"] = initialize_key(
+            params["differential_privacy"], "epochs", 20
+        )
+        params["differential_privacy"] = initialize_key(
+            params["differential_privacy"], "epsilon", 50.0
+        )
 
     return params
