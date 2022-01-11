@@ -100,6 +100,18 @@ nested_training:
     testing: 5, # this controls the testing data splits for final model evaluation; use '1' if this is to be disabled
     validation: 5 # this controls the validation data splits for model training
   }
+## differential privacy
+# GaNDLF uses Opacus [https://opacus.ai/] for differential privacy, more documentation details at https://opacus.ai/api/privacy_engine.html#module-opacus.privacy_engine
+# to disable, either completely remove this dict or set 'differential_privacy: False'
+differential_privacy:
+{
+  accountant: rdp, # the accounting mechanism; currently supported: - rdp (RDPAccountant) - gdp (GaussianAccountant)
+  secure_mode: False, # setting to True uses secure random number generator for noise and shuffling (as opposed to pseudo-rng in vanilla PyTorch) and prevents certain floating-point arithmetic-based attacks
+  sigma: 1.0, # the ratio of the standard deviation of the Gaussian noise to the L2-sensitivity of the function to which the noise is added (How much noise to add); also called the 'noise_multiplier'
+  max_grad_norm: 1.0, # the maximum norm of the per-sample gradients; any gradient with norm higher than this will be clipped to this value
+  epsilon: 50.0, # the privacy budget (in terms of the number of samples)
+  delta: 1e-5, # the target delta
+}
 ## pre-processing
 # this constructs an order of transformations, which is applied to all images in the data loader
 # order: all_methods_as_specified_in_dict --> normalize [normalization methods always applied at the end]
