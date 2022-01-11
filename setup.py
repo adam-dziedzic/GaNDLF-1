@@ -45,6 +45,7 @@ requirements = [
     "medcam",
     "torchmetrics",
     "OpenPatchMiner==0.1.6",
+    "opacus",
 ]
 
 setup(
