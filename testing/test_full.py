@@ -1143,7 +1143,7 @@ def test_differential_privacy_simple_classification_rad_2d(device):
     if os.path.exists(outputDir):
         shutil.rmtree(outputDir)  # overwrite previous results
     Path(outputDir).mkdir(parents=True, exist_ok=True)
-    
+
     TrainingManager(
         dataframe=training_data,
         outputDir=outputDir,

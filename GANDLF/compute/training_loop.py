@@ -368,7 +368,7 @@ def training_loop(
 
     print("Using device:", device, flush=True)
 
-    if not(params["differential_privacy"] in [None, False]):
+    if not (params["differential_privacy"] in [None, False]):
         from opacus import PrivacyEngine
 
         print("Using differential privacy")

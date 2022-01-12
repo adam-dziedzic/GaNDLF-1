@@ -596,7 +596,7 @@ def parseConfig(config_file_path, version_check_flag=True):
         temp_dict["type"] = params["optimizer"]
         params["optimizer"] = temp_dict
 
-    if not(params["differential_privacy"] in [None, False]):
+    if not (params["differential_privacy"] in [None, False]):
         if not isinstance(params["differential_privacy"], dict):
             print("WARNING: The key 'differential_privacy' should be a dictionary")
             params["differential_privacy"] = {}
