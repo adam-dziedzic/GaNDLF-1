@@ -617,6 +617,9 @@ def parseConfig(config_file_path, version_check_flag=True):
         params["differential_privacy"] = initialize_key(
             params["differential_privacy"], "secure_mode", False
         )
+        params["differential_privacy"] = initialize_key(
+            params["differential_privacy"], "allow_opacus_model_fix", False
+        )
         # this is required when epsilon is defined
         if "epsilon" in params["differential_privacy"]:
             params["differential_privacy"] = initialize_key(

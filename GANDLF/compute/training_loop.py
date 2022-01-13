@@ -78,6 +78,12 @@ def train_network(model, train_dataloader, optimizer, params):
         tqdm(train_dataloader, desc="Looping over training data")
     ):
         optimizer.zero_grad()
+        # TODO: remove test below
+        print()
+        # print("first subject[key] (ie using first key) is:", subject[params["channel_keys"][0]])
+        print("Subject keys are: ", subject.keys())
+        print("params[channel_keys] are: ", params["channel_keys"])
+        print()
         image = (
             torch.cat(
                 [subject[key][torchio.DATA] for key in params["channel_keys"]], dim=1
@@ -303,6 +309,23 @@ def training_loop(
     valid_logger.write_header(mode="valid")
     test_logger.write_header(mode="test")
 
+    if not(params["differential_privacy"] in [None, False]):
+        from opacus import PrivacyEngine
+        from opacus.validators import ModuleValidator
+
+        # use opacus to detect issues with model
+        opacus_errors_detected = ModuleValidator.validate(model, strict=False)
+
+        if not params["differential_privacy"]["allow_opacus_model_fix"]:
+            if opacus_errors_detected != []:
+                raise RuntimeError(f"Training parameters are set to not allow Opacus to try to fix incompatible model components, and the following issues were detected: {opacus_errors_detected}")
+        elif opacus_errors_detected != []:
+            print(f"Allowing Opacus to try and patch the model due to the following issues: ",opacus_errors_detected)
+            print()
+            model = ModuleValidator.fix(model)
+            # If the fix did not work, raise an exception
+            ModuleValidator.validate(model, strict=True)
+
     model, params["model"]["amp"], device = send_model_to_device(
         model, amp=params["model"]["amp"], device=params["device"], optimizer=optimizer
     )
@@ -369,13 +392,18 @@ def training_loop(
     print("Using device:", device, flush=True)
 
     if not(params["differential_privacy"] in [None, False]):
-        from opacus import PrivacyEngine
 
         print("Using differential privacy")
         privacy_engine = PrivacyEngine(
             accountant=params["differential_privacy"]["accountant"],
             secure_mode=params["differential_privacy"]["secure_mode"],
         )
+
+        # TODO: Remove test below
+        # TEST
+        for idx, (subject) in enumerate(train_dataloader):
+            if idx == 0:
+                print("Type of subject is: ", type(subject))
 
         if not "epsilon" in params["differential_privacy"]:
             model, optimizer, train_dataloader = privacy_engine.make_private(
@@ -399,6 +427,12 @@ def training_loop(
                 target_epsilon=params["differential_privacy"]["epsilon"],
                 target_delta=params["differential_privacy"]["delta"],
             )
+
+        # TODO: Remove test below
+        # TEST
+        for idx, (subject) in enumerate(train_dataloader):
+            if idx == 0:
+                print("Type of subject is: ", type(subject))
 
     # Iterate for number of epochs
     for epoch in range(start_epoch, epochs):
