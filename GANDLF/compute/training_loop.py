@@ -22,6 +22,7 @@ from GANDLF.utils import (
     version_check,
     write_training_patches,
 )
+from GANDLF.privacy.opacus import handle_dynamic_batch_size, opacus_model_fix
 from GANDLF.logger import Logger
 from .step import step
 from .forward_pass import validate_network
@@ -75,21 +76,17 @@ def train_network(model, train_dataloader, optimizer, params):
     # Set the model to train
     model.train()
     
-    # batch_size may be changed below dynamically when training with DP
-    batch_size_from_config = params["batch_size"]
-    
     print("\n############################")
     for batch_idx, (subject) in enumerate(
         tqdm(train_dataloader, desc="Looping over training data")
     ):
 
-        batch_size = batch_size_from_config
-
         # TODO: Remove test below
         
         print("On a subject with type: ", type(subject))
 
-        subject = handle_dynamic_batch_size(subject=subject, params=params)
+        if not(params["differential_privacy"] in [None, False]):
+            subject, batch_size = handle_dynamic_batch_size(subject=subject, params=params)
 
         optimizer.zero_grad()
         # TODO: remove test below
@@ -331,22 +328,13 @@ def training_loop(
     valid_logger.write_header(mode="valid")
     test_logger.write_header(mode="test")
 
+
+
     if not(params["differential_privacy"] in [None, False]):
-        from opacus import PrivacyEngine
-        from opacus.validators import ModuleValidator
 
-        # use opacus to detect issues with model
-        opacus_errors_detected = ModuleValidator.validate(model, strict=False)
+        opacus_model_fix(model=model, params=params)
 
-        if not params["differential_privacy"]["allow_opacus_model_fix"]:
-            if opacus_errors_detected != []:
-                raise RuntimeError(f"Training parameters are set to not allow Opacus to try to fix incompatible model components, and the following issues were detected: {opacus_errors_detected}")
-        elif opacus_errors_detected != []:
-            print(f"Allowing Opacus to try and patch the model due to the following issues: ",opacus_errors_detected)
-            print()
-            model = ModuleValidator.fix(model)
-            # If the fix did not work, raise an exception
-            ModuleValidator.validate(model, strict=True)
+        
 
     model, params["model"]["amp"], device = send_model_to_device(
         model, amp=params["model"]["amp"], device=params["device"], optimizer=optimizer

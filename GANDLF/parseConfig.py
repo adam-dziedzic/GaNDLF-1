@@ -2,6 +2,7 @@ import sys, yaml, ast, pkg_resources
 import numpy as np
 
 from .utils import version_check
+from GANDLF.privacy.opacus import parse_opacus_params
 
 ## dictionary to define defaults for appropriate options, which are evaluated
 parameter_defaults = {
@@ -598,7 +599,7 @@ def parseConfig(config_file_path, version_check_flag=True):
 
     if not (params["differential_privacy"] in [None, False]):
 
-        params = parse_dp_params(params)
+        params = parse_opacus_params(params)
 
         
 
