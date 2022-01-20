@@ -598,7 +598,7 @@ def parseConfig(config_file_path, version_check_flag=True):
 
     if not(params["differential_privacy"] in [None, False]):
         if not isinstance(params["differential_privacy"], dict):
-            print("WARNING: The key 'differential_privacy' should be a dictionary")
+            print("WARNING: Non dictionary value for the key: 'differential_privacy' was used, replacing with default valued dictionary.")
             params["differential_privacy"] = {}
         # these are some defaults
         if "noise_multiplier" in params["differential_privacy"]:

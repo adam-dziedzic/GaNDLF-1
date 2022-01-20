@@ -74,16 +74,54 @@ def train_network(model, train_dataloader, optimizer, params):
 
     # Set the model to train
     model.train()
+    
+    # batch_size may be changed below dynamically when training with DP
+    batch_size_from_config = params["batch_size"]
+    
+    print("\n############################")
     for batch_idx, (subject) in enumerate(
         tqdm(train_dataloader, desc="Looping over training data")
     ):
+
+        batch_size = batch_size_from_config
+
+        # TODO: Remove test below
+        
+        print("On a subject with type: ", type(subject))
+
+        if isinstance(subject, list):
+            print(f"List subject is: {subject} and subject[0] is: {subject[0]}")
+            # here capturing the case of an empty bach returned from opacus
+            if params["differential_privacy"] is not None:
+                are_empty = torch.Tensor([torch.equal(tensor, torch.Tensor([])) for tensor in subject])
+                if  torch.all(are_empty):
+                    # TODO: Pass info below via params (or some other method?)
+                    # replace subject with empty subject. Also using torchio.DATA when it is not
+                    # a torch image :(
+                    print("\nConstructing empty batch dictionary.\n")
+                    batch_size = 0
+                    subject = {'subject_id': 'empty_batch',
+                               'spacing': None, 
+                               'path_to_metadata': None, 
+                               'value_0': None, 
+                               'location': None}
+                    subject.update({key: {torchio.DATA: torch.zeros((0, 3, 128, 128))} for key in params["channel_keys"]})
+                    if "value_keys" in params:
+                        thingy = params["value_keys"]
+                        print(f"Here are value_keys: {thingy}")
+                        subject.update({key: torch.zeros((0, 3)).to(torch.float32) for key in params["value_keys"]})
+                    else:
+                        subject.update({"label": {torchio.DATA: torch.zeros((0, 3)).to(torch.int64) }})
+                        thingout = subject["label"]
+                        print(f"DEBUG, subjectlabel(shape) is: {thingout[torchio.DATA]}, {thingout[torchio.DATA].shape}")
+
         optimizer.zero_grad()
         # TODO: remove test below
         print()
         # print("first subject[key] (ie using first key) is:", subject[params["channel_keys"][0]])
-        print("Subject keys are: ", subject.keys())
         print("params[channel_keys] are: ", params["channel_keys"])
         print()
+        
         image = (
             torch.cat(
                 [subject[key][torchio.DATA] for key in params["channel_keys"]], dim=1
@@ -91,16 +129,22 @@ def train_network(model, train_dataloader, optimizer, params):
             .float()
             .to(params["device"])
         )
-        if "value_keys" in params:
+        if "value_keys" in params:     
             label = torch.cat([subject[key] for key in params["value_keys"]], dim=0)
+
+            # TODO: remove test below
             # min is needed because for certain cases, batch size becomes smaller than the total remaining labels
-            label = label.reshape(
-                min(params["batch_size"], len(label)),
-                len(params["value_keys"]),
-            )
+            # TODO: Check comment above against your code below
+            #label = label.reshape(-1, len(params["value_keys"]))
         else:
             label = subject["label"][torchio.DATA]
         label = label.to(params["device"])
+
+        # TODO: remove test below
+        print("label has shape: ", label.shape)
+        print("Image has shape: ", image.shape)
+
+            
 
         if params["save_training"]:
             write_training_patches(
@@ -173,7 +217,9 @@ def train_network(model, train_dataloader, optimizer, params):
                     "Half-Epoch Average Train " + metric + " : ",
                     to_print,
                 )
-
+    # TODO: remove print below, it is part of testing output
+    print("\n############################")
+    
     average_epoch_train_loss = total_epoch_train_loss / len(train_dataloader)
     print("     Epoch Final   Train loss : ", average_epoch_train_loss)
     for metric in params["metrics"]:
@@ -391,6 +437,9 @@ def training_loop(
 
     print("Using device:", device, flush=True)
 
+    # TODO: Remove testing below
+    print("params['differential_privacy'] is: ", params["differential_privacy"]) 
+
     if not(params["differential_privacy"] in [None, False]):
 
         print("Using differential privacy")
@@ -398,12 +447,6 @@ def training_loop(
             accountant=params["differential_privacy"]["accountant"],
             secure_mode=params["differential_privacy"]["secure_mode"],
         )
-
-        # TODO: Remove test below
-        # TEST
-        for idx, (subject) in enumerate(train_dataloader):
-            if idx == 0:
-                print("Type of subject is: ", type(subject))
 
         if not "epsilon" in params["differential_privacy"]:
             model, optimizer, train_dataloader = privacy_engine.make_private(
@@ -427,12 +470,6 @@ def training_loop(
                 target_epsilon=params["differential_privacy"]["epsilon"],
                 target_delta=params["differential_privacy"]["delta"],
             )
-
-        # TODO: Remove test below
-        # TEST
-        for idx, (subject) in enumerate(train_dataloader):
-            if idx == 0:
-                print("Type of subject is: ", type(subject))
 
     # Iterate for number of epochs
     for epoch in range(start_epoch, epochs):
