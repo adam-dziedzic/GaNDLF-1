@@ -89,31 +89,7 @@ def train_network(model, train_dataloader, optimizer, params):
         
         print("On a subject with type: ", type(subject))
 
-        if isinstance(subject, list):
-            print(f"List subject is: {subject} and subject[0] is: {subject[0]}")
-            # here capturing the case of an empty bach returned from opacus
-            if params["differential_privacy"] is not None:
-                are_empty = torch.Tensor([torch.equal(tensor, torch.Tensor([])) for tensor in subject])
-                if  torch.all(are_empty):
-                    # TODO: Pass info below via params (or some other method?)
-                    # replace subject with empty subject. Also using torchio.DATA when it is not
-                    # a torch image :(
-                    print("\nConstructing empty batch dictionary.\n")
-                    batch_size = 0
-                    subject = {'subject_id': 'empty_batch',
-                               'spacing': None, 
-                               'path_to_metadata': None, 
-                               'value_0': None, 
-                               'location': None}
-                    subject.update({key: {torchio.DATA: torch.zeros((0, 3, 128, 128))} for key in params["channel_keys"]})
-                    if "value_keys" in params:
-                        thingy = params["value_keys"]
-                        print(f"Here are value_keys: {thingy}")
-                        subject.update({key: torch.zeros((0, 3)).to(torch.float32) for key in params["value_keys"]})
-                    else:
-                        subject.update({"label": {torchio.DATA: torch.zeros((0, 3)).to(torch.int64) }})
-                        thingout = subject["label"]
-                        print(f"DEBUG, subjectlabel(shape) is: {thingout[torchio.DATA]}, {thingout[torchio.DATA].shape}")
+        subject = handle_dynamic_batch_size(subject=subject, params=params)
 
         optimizer.zero_grad()
         # TODO: remove test below
