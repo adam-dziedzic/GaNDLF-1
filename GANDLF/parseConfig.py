@@ -2,6 +2,7 @@ import sys, yaml, ast, pkg_resources
 import numpy as np
 
 from .utils import version_check
+from GANDLF.privacy.opacus import parse_opacus_params
 
 ## dictionary to define defaults for appropriate options, which are evaluated
 parameter_defaults = {
@@ -597,33 +598,9 @@ def parseConfig(config_file_path, version_check_flag=True):
         params["optimizer"] = temp_dict
 
     if not (params["differential_privacy"] in [None, False]):
-        if not isinstance(params["differential_privacy"], dict):
-            print("WARNING: The key 'differential_privacy' should be a dictionary")
-            params["differential_privacy"] = {}
-        # these are some defaults
-        if "noise_multiplier" in params["differential_privacy"]:
-            params["differential_privacy"]["sigma"] = params["differential_privacy"][
-                "noise_multiplier"
-            ]
-        params["differential_privacy"] = initialize_key(
-            params["differential_privacy"], "sigma", 1.0
-        )
-        params["differential_privacy"] = initialize_key(
-            params["differential_privacy"], "max_grad_norm", 1.0
-        )
-        params["differential_privacy"] = initialize_key(
-            params["differential_privacy"], "accountant", "rdp"
-        )
-        params["differential_privacy"] = initialize_key(
-            params["differential_privacy"], "secure_mode", False
-        )
-        # this is required when epsilon is defined
-        if "epsilon" in params["differential_privacy"]:
-            params["differential_privacy"] = initialize_key(
-                params["differential_privacy"], "delta", 1e-5
-            )
-            params["differential_privacy"] = initialize_key(
-                params["differential_privacy"], "epochs", 20
-            )
+
+        params = parse_opacus_params(params)
+
+        
 
     return params

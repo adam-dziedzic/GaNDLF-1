@@ -22,6 +22,7 @@ from GANDLF.utils import (
     version_check,
     write_training_patches,
 )
+from GANDLF.privacy.opacus import handle_dynamic_batch_size, opacus_model_fix
 from GANDLF.logger import Logger
 from .step import step
 from .forward_pass import validate_network
@@ -74,10 +75,26 @@ def train_network(model, train_dataloader, optimizer, params):
 
     # Set the model to train
     model.train()
+    
+    print("\n############################")
     for batch_idx, (subject) in enumerate(
         tqdm(train_dataloader, desc="Looping over training data")
     ):
+
+        # TODO: Remove test below
+        
+        print("On a subject with type: ", type(subject))
+
+        if not(params["differential_privacy"] in [None, False]):
+            subject, batch_size = handle_dynamic_batch_size(subject=subject, params=params)
+
         optimizer.zero_grad()
+        # TODO: remove test below
+        print()
+        # print("first subject[key] (ie using first key) is:", subject[params["channel_keys"][0]])
+        print("params[channel_keys] are: ", params["channel_keys"])
+        print()
+        
         image = (
             torch.cat(
                 [subject[key][torchio.DATA] for key in params["channel_keys"]], dim=1
@@ -85,16 +102,22 @@ def train_network(model, train_dataloader, optimizer, params):
             .float()
             .to(params["device"])
         )
-        if "value_keys" in params:
+        if "value_keys" in params:     
             label = torch.cat([subject[key] for key in params["value_keys"]], dim=0)
+
+            # TODO: remove test below
             # min is needed because for certain cases, batch size becomes smaller than the total remaining labels
-            label = label.reshape(
-                min(params["batch_size"], len(label)),
-                len(params["value_keys"]),
-            )
+            # TODO: Check comment above against your code below
+            #label = label.reshape(-1, len(params["value_keys"]))
         else:
             label = subject["label"][torchio.DATA]
         label = label.to(params["device"])
+
+        # TODO: remove test below
+        print("label has shape: ", label.shape)
+        print("Image has shape: ", image.shape)
+
+            
 
         if params["save_training"]:
             write_training_patches(
@@ -167,7 +190,9 @@ def train_network(model, train_dataloader, optimizer, params):
                     "Half-Epoch Average Train " + metric + " : ",
                     to_print,
                 )
-
+    # TODO: remove print below, it is part of testing output
+    print("\n############################")
+    
     average_epoch_train_loss = total_epoch_train_loss / len(train_dataloader)
     print("     Epoch Final   Train loss : ", average_epoch_train_loss)
     for metric in params["metrics"]:
@@ -303,6 +328,14 @@ def training_loop(
     valid_logger.write_header(mode="valid")
     test_logger.write_header(mode="test")
 
+
+
+    if not(params["differential_privacy"] in [None, False]):
+
+        opacus_model_fix(model=model, params=params)
+
+        
+
     model, params["model"]["amp"], device = send_model_to_device(
         model, amp=params["model"]["amp"], device=params["device"], optimizer=optimizer
     )
@@ -368,8 +401,10 @@ def training_loop(
 
     print("Using device:", device, flush=True)
 
-    if not (params["differential_privacy"] in [None, False]):
-        from opacus import PrivacyEngine
+    # TODO: Remove testing below
+    print("params['differential_privacy'] is: ", params["differential_privacy"]) 
+
+    if not(params["differential_privacy"] in [None, False]):
 
         print("Using differential privacy")
         privacy_engine = PrivacyEngine(
