@@ -12,7 +12,6 @@ metrics:
   - f1: {
       average: weighted,
     }
-  - accuracy
   - balanced_accuracy
   - precision: {
       average: weighted,

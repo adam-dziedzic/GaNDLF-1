@@ -24,7 +24,6 @@ def handle_nonempty_batch(subject, params):
     
 
     """
-    # TODO: measure batch size and modify subject dictionary if needed
     batch_size = len(subject[params["channel_keys"][0]][torchio.DATA])
     return subject, batch_size
 
@@ -54,12 +53,6 @@ def handle_empty_batch(subject, params, feature_shape, label_shape):
 
     """
 
-
-    # TODO: Pass info below via params (or some other method?)
-    # replace subject with empty subject. Also using torchio.DATA when it is not
-    # a torch image :(
-
-    # TODO: remove test below
     print("\nConstructing empty batch dictionary.\n")
 
     subject = {'subject_id': 'empty_batch',
@@ -70,21 +63,13 @@ def handle_empty_batch(subject, params, feature_shape, label_shape):
     subject.update({key: {torchio.DATA: torch.zeros(tuple([0] + feature_shape ))} for key in params["channel_keys"]})
     if "value_keys" in params:
 
-        # TODO: remove test below
-        value_keys = params["value_keys"]
-        print(f"Here are value_keys: {value_keys}")
-        
         subject.update({key: torch.zeros((0, 3)).to(torch.int64) for key in params["value_keys"]})
     else:
         subject.update({"label": {torchio.DATA: torch.zeros(tuple([0] + label_shape)).to(torch.int64) }})
-        
-        # TODO: remove test below
-        label_obj = subject["label"]
-        print(f"DEBUG, subjectlabel(shape) is: {label_obj[torchio.DATA]}, {label_obj[torchio.DATA].shape}")
-
+    
     return subject
 
-def handle_dynamic_batch_size(subject, params, feature_shape=[3, 128, 128, 1], label_shape=[3, 128, 128, 1]):
+def handle_dynamic_batch_size(subject, params, feature_shape, label_shape):
     # TODO: Replace hard-coded feature an label shapes above with info from config or other
     """
     Function to process the subject opacus loaders 
