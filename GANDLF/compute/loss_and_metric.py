@@ -123,6 +123,8 @@ def get_loss_and_metrics(image, ground_truth, predicted, params):
     for metric in params["metrics"]:
         # TODO: remove test below
         print("Computing metric: ", metric)
+        print(f"predicted(shape): {predicted}, {predicted.shape}")
+        print(f"ground_truth(shape): {ground_truth}, {ground_truth.shape}")
 
         metric_lower = metric.lower()
         metric_output[metric] = 0

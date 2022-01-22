@@ -567,7 +567,7 @@ def parseConfig(config_file_path, version_check_flag=True):
 
     if not (params["differential_privacy"] in [None, False]):
 
-        params = parse_opacus_params(params)
+        params = parse_opacus_params(params, initialize_key)
 
         
 
