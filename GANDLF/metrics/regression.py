@@ -45,6 +45,7 @@ def accuracy(output, label, params):
 def balanced_acc_score(output, label, params):
     if params["problem_type"] == "classification":
         predicted_classes = torch.argmax(output, 1)
+        print("YES, WE DID THE ARGMAX")
     else:
         predicted_classes = output
 

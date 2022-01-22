@@ -1,6 +1,8 @@
 import torch
 import torchio
 
+from opacus import PrivacyEngine
+
 
 def handle_nonempty_batch(subject, params):
     """
@@ -24,7 +26,7 @@ def handle_nonempty_batch(subject, params):
     """
     # TODO: measure batch size and modify subject dictionary if needed
     batch_size = len(subject[params["channel_keys"][0]][torchio.DATA])
-    return (subject, batch_size)
+    return subject, batch_size
 
 
 def handle_empty_batch(subject, params, feature_shape, label_shape):
@@ -60,7 +62,6 @@ def handle_empty_batch(subject, params, feature_shape, label_shape):
     # TODO: remove test below
     print("\nConstructing empty batch dictionary.\n")
 
-    batch_size = 0
     subject = {'subject_id': 'empty_batch',
                'spacing': None, 
                'path_to_metadata': None, 
@@ -73,7 +74,7 @@ def handle_empty_batch(subject, params, feature_shape, label_shape):
         value_keys = params["value_keys"]
         print(f"Here are value_keys: {value_keys}")
         
-        subject.update({key: torch.zeros((0, 3)).to(torch.float32) for key in params["value_keys"]})
+        subject.update({key: torch.zeros((0, 3)).to(torch.int64) for key in params["value_keys"]})
     else:
         subject.update({"label": {torchio.DATA: torch.zeros(tuple([0] + label_shape)).to(torch.int64) }})
         
@@ -81,12 +82,12 @@ def handle_empty_batch(subject, params, feature_shape, label_shape):
         label_obj = subject["label"]
         print(f"DEBUG, subjectlabel(shape) is: {label_obj[torchio.DATA]}, {label_obj[torchio.DATA].shape}")
 
-    return (subject, batch_size)
+    return subject
 
-def handle_dynamic_batch_size(subject, params, feature_shape=[3, 128, 128], label_shape=[3]):
+def handle_dynamic_batch_size(subject, params, feature_shape=[3, 128, 128, 1], label_shape=[3, 128, 128, 1]):
     # TODO: Replace hard-coded feature an label shapes above with info from config or other
     """
-    Function to replace the subject opacus loaders 
+    Function to process the subject opacus loaders 
     provide and prepare to handle their dynamic batch size 
     (including possible empty batches).
 
@@ -109,19 +110,26 @@ def handle_dynamic_batch_size(subject, params, feature_shape=[3, 128, 128], labe
     
     """
 
-    # TODO: remove test below
-    print(f"List subject is: {subject} and subject[0] is: {subject[0]}")
-    
-    # here looking for the case of an empty bach returned from opacus
-    are_empty = torch.Tensor([torch.equal(tensor, torch.Tensor([])) for tensor in subject])
-    if  not torch.all(are_empty):
-        (subject, batch_size) =  handle_nonempty_batch(subject=subject, params=params)
+    # The handling performed here is currently to be able to comprehend what 
+    # batch size we are currently working with (which we may later see as not needed)
+    # and also to handle the previously observed case where opacus produces
+    # a subject that is not a dictionary but rather a list of empty arrays
+    # (due to the empty batch result). The latter case is detected as a subject that
+    # is a list object.
+    if isinstance(subject, list):
+        are_empty = torch.Tensor([torch.equal(tensor, torch.Tensor([])) for tensor in subject])
+        if  not torch.all(are_empty):
+            raise RuntimeError("Detected a list subject that is not an empty batch. This is not expected behavior.")
+        else:
+            subject = handle_empty_batch(subject=subject, 
+                                        params=params, 
+                                        feature_shape=feature_shape, 
+                                        label_shape=label_shape)
+            batch_size = 0
     else:
-        subject = handle_empty_batch(subject=subject, 
-                                     params=params, 
-                                     feature_shape=feature_shape, 
-                                     label_shape=label_shape)
-        batch_size = 0
-        
-    return (subject, batch_size)
-        
+        subject, batch_size = handle_nonempty_batch(subject=subject, 
+                                                    params=params)
+            
+    return subject, batch_size
+
+

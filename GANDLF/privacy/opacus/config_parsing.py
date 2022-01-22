@@ -1,7 +1,6 @@
-from GANDLF.parseConfig import initialize_key
 
 
-def parse_opacus_params(params):
+def parse_opacus_params(params, initialize_key):
     """
     Function to set defaults and augment the parameters related to making a trained model differentially
     private with respect to the training data.
@@ -10,6 +9,8 @@ def parse_opacus_params(params):
     ----------
     params : dict
         Training parameters.
+    initialize_key : function
+        Function to fill in value for a missing key.
 
     Returns
     -------
