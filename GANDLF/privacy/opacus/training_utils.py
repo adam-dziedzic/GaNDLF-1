@@ -28,7 +28,7 @@ def handle_nonempty_batch(subject, params):
     return subject, batch_size
 
 
-def handle_empty_batch(subject, params, feature_shape, label_shape):
+def handle_empty_batch(subject, params, feature_shape):
     """
     Function to replace the list of empty arrays an opacus loader 
     provides in the case of an empty batch with a subject dictionary GANDLF can consume.
@@ -41,9 +41,6 @@ def handle_empty_batch(subject, params, feature_shape, label_shape):
         Training parameters.
     feature_shape : list
         Shape of a single feature in a batch.
-    label_shape: list
-        Shape of single label in a batch.
-
 
     Returns
     -------
@@ -65,12 +62,11 @@ def handle_empty_batch(subject, params, feature_shape, label_shape):
 
         subject.update({key: torch.zeros((0, 3)).to(torch.int64) for key in params["value_keys"]})
     else:
-        subject.update({"label": {torchio.DATA: torch.zeros(tuple([0] + label_shape)).to(torch.int64) }})
+        subject.update({"label": {torchio.DATA: torch.zeros(tuple([0] + feature_shape)).to(torch.int64) }})
     
     return subject
 
-def handle_dynamic_batch_size(subject, params, feature_shape, label_shape):
-    # TODO: Replace hard-coded feature an label shapes above with info from config or other
+def handle_dynamic_batch_size(subject, params):
     """
     Function to process the subject opacus loaders 
     provide and prepare to handle their dynamic batch size 
@@ -82,12 +78,7 @@ def handle_dynamic_batch_size(subject, params, feature_shape, label_shape):
         Training data subject dictionary.
     params : dict
         Training parameters.
-    feature_shape : list
-        Shape of a single feature in a batch.
-    label_shape: list
-        Shape of single label in a batch.
-
-
+    
     Returns
     -------
     subject : dict
@@ -106,14 +97,14 @@ def handle_dynamic_batch_size(subject, params, feature_shape, label_shape):
         if  not torch.all(are_empty):
             raise RuntimeError("Detected a list subject that is not an empty batch. This is not expected behavior.")
         else:
+            #feature_shape = [params["model"]["num_channels"]]+params["patch_size"]
+            feature_shape = [params["model"]["num_channels"]]+params["patch_size"]
             subject = handle_empty_batch(subject=subject, 
                                         params=params, 
-                                        feature_shape=feature_shape, 
-                                        label_shape=label_shape)
+                                        feature_shape=feature_shape)
             batch_size = 0
     else:
-        subject, batch_size = handle_nonempty_batch(subject=subject, 
-                                                    params=params)
+        subject, batch_size = handle_nonempty_batch(subject=subject, params=params)
             
     return subject, batch_size
 
