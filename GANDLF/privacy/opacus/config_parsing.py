@@ -1,5 +1,3 @@
-
-
 def parse_opacus_params(params, initialize_key):
     """
     Function to set defaults and augment the parameters related to making a trained model differentially
@@ -16,12 +14,13 @@ def parse_opacus_params(params, initialize_key):
     -------
     params : dict
         Training parameters
-    
+
     """
-    
 
     if not isinstance(params["differential_privacy"], dict):
-        print("WARNING: Non dictionary value for the key: 'differential_privacy' was used, replacing with default valued dictionary.")
+        print(
+            "WARNING: Non dictionary value for the key: 'differential_privacy' was used, replacing with default valued dictionary."
+        )
         params["differential_privacy"] = {}
         # these are some defaults
     if "noise_multiplier" in params["differential_privacy"]:
