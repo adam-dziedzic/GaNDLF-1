@@ -569,6 +569,4 @@ def parseConfig(config_file_path, version_check_flag=True):
 
         params = parse_opacus_params(params, initialize_key)
 
-        
-
     return params

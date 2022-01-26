@@ -6,8 +6,8 @@ from GANDLF.utils.tensor import one_hot
 def generic_function_output_with_check(predicted_classes, label, metric_function):
     # empty batches are seen when training with opacus
     if (predicted_classes.nelement() == 0) and (label.nelement() == 0):
-        return torch.zeros((1), device=predicted_classes.device) 
-    elif  torch.min(predicted_classes) < 0:
+        return torch.zeros((1), device=predicted_classes.device)
+    elif torch.min(predicted_classes) < 0:
         print(
             "WARNING: Negative values detected in prediction, cannot compute torchmetrics calculations."
         )

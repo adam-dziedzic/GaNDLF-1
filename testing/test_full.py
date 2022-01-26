@@ -3,6 +3,8 @@ import requests, zipfile, io, os, csv, random, copy, shutil, sys, yaml, torch, p
 import SimpleITK as sitk
 import numpy as np
 
+from pydicom.data import get_testdata_file
+
 from GANDLF.data.ImagesFromDataFrame import ImagesFromDataFrame
 from GANDLF.utils import *
 from GANDLF.data.preprocessing import global_preprocessing_dict
@@ -16,6 +18,7 @@ from GANDLF.schedulers import global_schedulers_dict
 from GANDLF.optimizers import global_optimizer_dict
 from GANDLF.models import global_models_dict
 from GANDLF.post_process import torch_morphological, fill_holes
+from GANDLF.anonymize import run_anonymizer
 
 device = "cpu"
 ## global defines
@@ -1140,8 +1143,10 @@ def test_differential_privacy_simple_classification_rad_2d(device):
     parameters["model"]["num_channels"] = 3
     parameters["model"]["norm_type"] = "instance"
     parameters["differential_privacy"] = True
-    parameters["data"] = {"feature_shape": [3, 128, 128, 1], 
-                          "label_shape": [3, 128, 128, 1]}
+    parameters["data"] = {
+        "feature_shape": [3, 128, 128, 1],
+        "label_shape": [3, 128, 128, 1],
+    }
     file_config_temp = os.path.join(testingDir, "config_segmentation_temp.yaml")
     # if found in previous run, discard.
     if os.path.exists(file_config_temp):
@@ -1183,8 +1188,10 @@ def test_differential_privacy_epsilon_classification_rad_2d(device):
     parameters["model"]["num_channels"] = 3
     parameters["model"]["norm_type"] = "instance"
     parameters["differential_privacy"] = {"epsilon": 25.0}
-    parameters["data"] = {"feature_shape": [3, 128, 128, 1], 
-                          "label_shape": [3, 128, 128, 1]}
+    parameters["data"] = {
+        "feature_shape": [3, 128, 128, 1],
+        "label_shape": [3, 128, 128, 1],
+    }
     file_config_temp = os.path.join(testingDir, "config_segmentation_temp.yaml")
     # if found in previous run, discard.
     if os.path.exists(file_config_temp):
@@ -1207,3 +1214,17 @@ def test_differential_privacy_epsilon_classification_rad_2d(device):
     shutil.rmtree(outputDir)  # overwrite previous results
 
     print("passed")
+
+
+def test_anonymizer():
+    input_file = get_testdata_file("MR_small.dcm")
+
+    output_file = os.path.join(testingDir, "MR_small_anonymized.yaml")
+    if os.path.exists(output_file):
+        os.remove(output_file)
+
+    config_file = os.path.join(baseConfigDir, "config_anonymizer.yaml")
+
+    run_anonymizer(input_file, output_file, config_file)
+
+    os.remove(output_file)

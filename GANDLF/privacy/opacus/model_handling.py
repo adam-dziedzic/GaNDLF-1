@@ -1,6 +1,7 @@
 from opacus import PrivacyEngine
 from opacus.validators import ModuleValidator
 
+
 def opacus_model_fix(model, params):
     """
     Function to detect components of the model that are not compatible with Opacus
@@ -20,7 +21,7 @@ def opacus_model_fix(model, params):
     model : torch.nn.Module
         Model, with potentially some components replaced with ones comptible with Opacus
         to allow for Opacus to make the training differentially private
-    
+
 
     """
     # use opacus to detect issues with model
@@ -28,9 +29,14 @@ def opacus_model_fix(model, params):
 
     if not params["differential_privacy"]["allow_opacus_model_fix"]:
         if opacus_errors_detected != []:
-            raise RuntimeError(f"Training parameters are set to not allow Opacus to try to fix incompatible model components, and the following issues were detected: {opacus_errors_detected}")
+            raise RuntimeError(
+                f"Training parameters are set to not allow Opacus to try to fix incompatible model components, and the following issues were detected: {opacus_errors_detected}"
+            )
     elif opacus_errors_detected != []:
-        print(f"Allowing Opacus to try and patch the model due to the following issues: ",opacus_errors_detected)
+        print(
+            f"Allowing Opacus to try and patch the model due to the following issues: ",
+            opacus_errors_detected,
+        )
         print()
         model = ModuleValidator.fix(model)
         # If the fix did not work, raise an exception
@@ -63,7 +69,7 @@ def prep_for_opacus_training(model, optimizer, train_dataloader, params):
         Model optimizer.
     train_data_loader : torch.utils.data.DataLoader
         Dataloader for training data
-    
+
 
     """
 

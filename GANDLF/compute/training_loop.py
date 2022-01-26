@@ -22,7 +22,11 @@ from GANDLF.utils import (
     version_check,
     write_training_patches,
 )
-from GANDLF.privacy.opacus import handle_dynamic_batch_size, opacus_model_fix, prep_for_opacus_training
+from GANDLF.privacy.opacus import (
+    handle_dynamic_batch_size,
+    opacus_model_fix,
+    prep_for_opacus_training,
+)
 from GANDLF.logger import Logger
 from .step import step
 from .forward_pass import validate_network
@@ -78,24 +82,32 @@ def train_network(model, train_dataloader, optimizer, params):
 
     # in the case of opacus DP training, this will dynamically change over batch iterations
     batch_size = params["batch_size"]
-    
+
     for batch_idx, (subject) in enumerate(
         tqdm(train_dataloader, desc="Looping over training data")
     ):
 
-        if not(params["differential_privacy"] in [None, False]):
-            if ("data" not in params) or ("feature_shape" not in params["data"]) or ("label_shape" not in params["data"]):
-                raise ValueError("When training with differential privacy using opacus, params must have a 'data' key with dict value that provides lists for keys 'feature_shape' and 'label_shape'")
+        if not (params["differential_privacy"] in [None, False]):
+            if (
+                ("data" not in params)
+                or ("feature_shape" not in params["data"])
+                or ("label_shape" not in params["data"])
+            ):
+                raise ValueError(
+                    "When training with differential privacy using opacus, params must have a 'data' key with dict value that provides lists for keys 'feature_shape' and 'label_shape'"
+                )
             else:
-                feature_shape = params["data"]["feature_shape"] 
+                feature_shape = params["data"]["feature_shape"]
                 label_shape = params["data"]["label_shape"]
-                subject, batch_size = handle_dynamic_batch_size(subject=subject, 
-                                                                params=params, 
-                                                                feature_shape=feature_shape,
-                                                                label_shape=label_shape)
+                subject, batch_size = handle_dynamic_batch_size(
+                    subject=subject,
+                    params=params,
+                    feature_shape=feature_shape,
+                    label_shape=label_shape,
+                )
 
         optimizer.zero_grad()
-        
+
         image = (
             torch.cat(
                 [subject[key][torchio.DATA] for key in params["channel_keys"]], dim=1
@@ -103,7 +115,7 @@ def train_network(model, train_dataloader, optimizer, params):
             .float()
             .to(params["device"])
         )
-        if "value_keys" in params:     
+        if "value_keys" in params:
             label = torch.cat([subject[key] for key in params["value_keys"]], dim=0)
 
             label = label.reshape(
@@ -236,7 +248,7 @@ def training_loop(
     # Fetch the model according to params mentioned in the configuration file
     model = global_models_dict[params["model"]["architecture"]](parameters=params)
 
-    if not(params["differential_privacy"] in [None, False]):
+    if not (params["differential_privacy"] in [None, False]):
         model = opacus_model_fix(model=model, params=params)
 
     # Set up the dataloaders
@@ -321,7 +333,7 @@ def training_loop(
     )
     train_logger.write_header(mode="train")
     valid_logger.write_header(mode="valid")
-    test_logger.write_header(mode="test")    
+    test_logger.write_header(mode="test")
 
     model, params["model"]["amp"], device = send_model_to_device(
         model, amp=params["model"]["amp"], device=params["device"], optimizer=optimizer
@@ -388,13 +400,17 @@ def training_loop(
 
     print("Using device:", device, flush=True)
 
-    if not(params["differential_privacy"] in [None, False]):
+    if not (params["differential_privacy"] in [None, False]):
 
-        print("Using Opacus to make training differentially private with respect to the traininng data.")
-        model, optimizer, train_dataloader = prep_for_opacus_training(model=model, 
-                                                                      optimizer=optimizer, 
-                                                                      train_dataloader=train_dataloader, 
-                                                                      params=params)
+        print(
+            "Using Opacus to make training differentially private with respect to the traininng data."
+        )
+        model, optimizer, train_dataloader = prep_for_opacus_training(
+            model=model,
+            optimizer=optimizer,
+            train_dataloader=train_dataloader,
+            params=params,
+        )
 
     # Iterate for number of epochs
     for epoch in range(start_epoch, epochs):

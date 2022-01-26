@@ -115,7 +115,9 @@ def get_loss_and_metrics(image, ground_truth, predicted, params):
                 )
         else:
             # TODO: Remove test below
-            print(f"\npredicted(type)(shape): {predicted}, {predicted.dtype}, {predicted.shape} ground_truth(type)(shape): {ground_truth}, {ground_truth.dtype}, {ground_truth.shape}\n")
+            print(
+                f"\npredicted(type)(shape): {predicted}, {predicted.dtype}, {predicted.shape} ground_truth(type)(shape): {ground_truth}, {ground_truth.dtype}, {ground_truth.shape}\n"
+            )
             loss = loss_function(predicted, ground_truth, params)
     metric_output = {}
 

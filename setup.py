@@ -48,6 +48,7 @@ requirements = [
     "torchmetrics",
     "OpenPatchMiner==0.1.6",
     "opacus",
+    "pydicom",
 ]
 
 setup(
@@ -63,6 +64,7 @@ setup(
         "gandlf_collectStats",
         "gandlf_patchMiner",
         "gandlf_preprocess",
+        "gandlf_anonymizer",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
