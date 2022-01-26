@@ -1143,10 +1143,6 @@ def test_differential_privacy_simple_classification_rad_2d(device):
     parameters["model"]["num_channels"] = 3
     parameters["model"]["norm_type"] = "instance"
     parameters["differential_privacy"] = True
-    parameters["data"] = {
-        "feature_shape": [3, 128, 128, 1],
-        "label_shape": [3, 128, 128, 1],
-    }
     file_config_temp = os.path.join(testingDir, "config_segmentation_temp.yaml")
     # if found in previous run, discard.
     if os.path.exists(file_config_temp):
@@ -1188,10 +1184,6 @@ def test_differential_privacy_epsilon_classification_rad_2d(device):
     parameters["model"]["num_channels"] = 3
     parameters["model"]["norm_type"] = "instance"
     parameters["differential_privacy"] = {"epsilon": 25.0}
-    parameters["data"] = {
-        "feature_shape": [3, 128, 128, 1],
-        "label_shape": [3, 128, 128, 1],
-    }
     file_config_temp = os.path.join(testingDir, "config_segmentation_temp.yaml")
     # if found in previous run, discard.
     if os.path.exists(file_config_temp):

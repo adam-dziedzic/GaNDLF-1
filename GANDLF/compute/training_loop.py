@@ -88,23 +88,9 @@ def train_network(model, train_dataloader, optimizer, params):
     ):
 
         if not (params["differential_privacy"] in [None, False]):
-            if (
-                ("data" not in params)
-                or ("feature_shape" not in params["data"])
-                or ("label_shape" not in params["data"])
-            ):
-                raise ValueError(
-                    "When training with differential privacy using opacus, params must have a 'data' key with dict value that provides lists for keys 'feature_shape' and 'label_shape'"
-                )
-            else:
-                feature_shape = params["data"]["feature_shape"]
-                label_shape = params["data"]["label_shape"]
-                subject, batch_size = handle_dynamic_batch_size(
-                    subject=subject,
-                    params=params,
-                    feature_shape=feature_shape,
-                    label_shape=label_shape,
-                )
+            subject, batch_size = handle_dynamic_batch_size(
+                subject=subject, params=params
+            )
 
         optimizer.zero_grad()
 

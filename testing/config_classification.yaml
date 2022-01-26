@@ -8,7 +8,7 @@ learning_rate: 0.001
 loss_function: cel
 metrics:
   - cel
-  - classification_accuracy
+  - accuracy
   - f1: {
       average: weighted,
     }

@@ -1,6 +1,7 @@
 import sys
 from GANDLF.losses import global_losses_dict
 from GANDLF.metrics import global_metrics_dict
+import torch
 import torch.nn.functional as nnf
 
 from GANDLF.utils import one_hot, reverse_one_hot, get_linear_interpolation_mode
@@ -114,20 +115,11 @@ def get_loss_and_metrics(image, ground_truth, predicted, params):
                     * loss_weights[i]
                 )
         else:
-            # TODO: Remove test below
-            print(
-                f"\npredicted(type)(shape): {predicted}, {predicted.dtype}, {predicted.shape} ground_truth(type)(shape): {ground_truth}, {ground_truth.dtype}, {ground_truth.shape}\n"
-            )
             loss = loss_function(predicted, ground_truth, params)
     metric_output = {}
 
     # Metrics should be a list
     for metric in params["metrics"]:
-        # TODO: remove test below
-        print("Computing metric: ", metric)
-        print(f"predicted(shape): {predicted}, {predicted.shape}")
-        print(f"ground_truth(shape): {ground_truth}, {ground_truth.shape}")
-
         metric_lower = metric.lower()
         metric_output[metric] = 0
         if metric_lower in global_metrics_dict:
