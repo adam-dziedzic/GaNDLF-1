@@ -28,7 +28,7 @@ def parse_opacus_params(params, initialize_key):
             "noise_multiplier"
         ]
     params["differential_privacy"] = initialize_key(
-        params["differential_privacy"], "sigma", 1.0
+        params["differential_privacy"], "sigma", 10.0
     )
     params["differential_privacy"] = initialize_key(
         params["differential_privacy"], "max_grad_norm", 1.0
@@ -42,12 +42,7 @@ def parse_opacus_params(params, initialize_key):
     params["differential_privacy"] = initialize_key(
         params["differential_privacy"], "allow_opacus_model_fix", False
     )
-    # this is required when epsilon is defined
-    if "epsilon" in params["differential_privacy"]:
-        params["differential_privacy"] = initialize_key(
-            params["differential_privacy"], "delta", 1e-5
-        )
-        params["differential_privacy"] = initialize_key(
-            params["differential_privacy"], "epochs", 20
-        )
+    params["differential_privacy"] = initialize_key(
+        params["differential_privacy"], "delta", 1e-5
+    )
     return params
