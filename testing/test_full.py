@@ -3,6 +3,8 @@ import requests, zipfile, io, os, csv, random, copy, shutil, sys, yaml, torch, p
 import SimpleITK as sitk
 import numpy as np
 
+from pydicom.data import get_testdata_file
+
 from GANDLF.data.ImagesFromDataFrame import ImagesFromDataFrame
 from GANDLF.utils import *
 from GANDLF.data.preprocessing import global_preprocessing_dict
@@ -16,6 +18,7 @@ from GANDLF.schedulers import global_schedulers_dict
 from GANDLF.optimizers import global_optimizer_dict
 from GANDLF.models import global_models_dict
 from GANDLF.post_process import torch_morphological, fill_holes
+from GANDLF.anonymize import run_anonymizer
 
 device = "cpu"
 ## global defines
@@ -1203,3 +1206,17 @@ def test_differential_privacy_epsilon_classification_rad_2d(device):
     shutil.rmtree(outputDir)  # overwrite previous results
 
     print("passed")
+
+
+def test_anonymizer():
+    input_file = get_testdata_file("MR_small.dcm")
+
+    output_file = os.path.join(testingDir, "MR_small_anonymized.yaml")
+    if os.path.exists(output_file):
+        os.remove(output_file)
+
+    config_file = os.path.join(baseConfigDir, "config_anonymizer.yaml")
+
+    run_anonymizer(input_file, output_file, config_file)
+
+    os.remove(output_file)
