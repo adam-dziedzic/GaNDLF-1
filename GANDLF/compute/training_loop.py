@@ -224,6 +224,7 @@ def training_loop(
     """
     # Some autodetermined factors
     if epochs is None:
+        print("Hello, taking epochs from num_epochs")
         epochs = params["num_epochs"]
     params["device"] = device
     params["output_dir"] = output_dir
@@ -391,7 +392,7 @@ def training_loop(
         print(
             "Using Opacus to make training differentially private with respect to the traininng data."
         )
-        model, optimizer, train_dataloader = prep_for_opacus_training(
+        model, optimizer, train_dataloader, privacy_engine = prep_for_opacus_training(
             model=model,
             optimizer=optimizer,
             train_dataloader=train_dataloader,
@@ -470,6 +471,12 @@ def training_loop(
                 model, test_dataloader, scheduler, params, epoch, mode="testing"
             )
             test_logger.write(epoch, epoch_test_loss, epoch_test_metric)
+
+        # if training with differential privacy, print privacy epsilon
+        if not (params["differential_privacy"] in [None, False]):
+            delta = params["differential_privacy"]["delta"]
+            this_epsilon = privacy_engine.get_epsilon(delta)
+            print(f"     Epoch Final   Privacy: (ε = {this_epsilon:.2f}, δ = {delta})")
 
         if params["verbose"]:
             print("Epoch end time : ", get_date_time())

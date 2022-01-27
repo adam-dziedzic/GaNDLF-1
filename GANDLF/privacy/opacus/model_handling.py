@@ -96,8 +96,8 @@ def prep_for_opacus_training(model, optimizer, train_dataloader, params):
             optimizer=optimizer,
             data_loader=train_dataloader,
             max_grad_norm=params["differential_privacy"]["max_grad_norm"],
-            epochs=params["differential_privacy"]["epochs"],
+            epochs=params["num_epochs"],
             target_epsilon=params["differential_privacy"]["epsilon"],
             target_delta=params["differential_privacy"]["delta"],
         )
-    return model, optimizer, train_dataloader
+    return model, optimizer, train_dataloader, privacy_engine
