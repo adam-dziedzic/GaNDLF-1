@@ -462,6 +462,14 @@ def training_loop(
 
         patience += 1
 
+        # if training with differential privacy, print privacy epsilon
+        if not (params["differential_privacy"] in [None, False]):
+            delta = params["differential_privacy"]["delta"]
+            this_epsilon = privacy_engine.get_epsilon(delta)
+            print(f"     Epoch Final   Privacy: (ε = {this_epsilon:.2f}, δ = {delta})")
+            # save for logging
+            epoch_valid_metric["epsilon"] = this_epsilon
+
         # Write the losses to a logger
         train_logger.write(epoch, epoch_train_loss, epoch_train_metric)
         valid_logger.write(epoch, epoch_valid_loss, epoch_valid_metric)
@@ -471,12 +479,6 @@ def training_loop(
                 model, test_dataloader, scheduler, params, epoch, mode="testing"
             )
             test_logger.write(epoch, epoch_test_loss, epoch_test_metric)
-
-        # if training with differential privacy, print privacy epsilon
-        if not (params["differential_privacy"] in [None, False]):
-            delta = params["differential_privacy"]["delta"]
-            this_epsilon = privacy_engine.get_epsilon(delta)
-            print(f"     Epoch Final   Privacy: (ε = {this_epsilon:.2f}, δ = {delta})")
 
         if params["verbose"]:
             print("Epoch end time : ", get_date_time())
