@@ -27,6 +27,7 @@ parameter_defaults = {
     "track_memory_usage": False,  # default memory tracking
     "print_rgb_label_warning": True,  # default memory tracking
     "differential_privacy": None,  # default memory tracking
+    "data_postprocessing": {},  # default data postprocessing
 }
 
 ## dictionary to define string defaults for appropriate options

@@ -509,6 +509,7 @@ def training_loop(
                 best_model_path,
             )
             first_model_saved = True
+            print("Best epoch: ", best_train_idx)
 
         if patience > params["patience"]:
             print(
