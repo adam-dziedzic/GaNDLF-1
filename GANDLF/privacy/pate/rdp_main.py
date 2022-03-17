@@ -76,7 +76,7 @@ def rdp_to_dp(orders, rdp, delta):
         if r < 0:
             raise ValueError("Renyi divergence must be >=0.")
 
-        if delta ** 2 + math.expm1(-r) >= 0:
+        if delta**2 + math.expm1(-r) >= 0:
             # In this case, we can simply bound via KL divergence:
             # delta <= sqrt(1-exp(-KL)).
             eps = 0  # No need to try further computation if we have eps = 0.
@@ -112,16 +112,14 @@ def compute_logq_gnmax(votes, sigma):
         A scalar upper bound on log(Pr[outcome != argmax]) where log denotes natural logarithm.
     """
     num_classes = len(votes)
-    variance = sigma ** 2
+    variance = sigma**2
     idx_max = np.argmax(votes)
     votes_gap = votes[idx_max] - votes
     votes_gap = votes_gap[np.arange(num_classes) != idx_max]  # exclude argmax
     # Upper bound log(q) via a union bound rather than a more precise
     # calculation.
-    logq = _logsumexp(
-        scipy.stats.norm.logsf(votes_gap, scale=math.sqrt(2 * variance)))
-    return min(logq,
-               math.log(1 - (1 / num_classes)))  # another obvious upper bound
+    logq = _logsumexp(scipy.stats.norm.logsf(votes_gap, scale=math.sqrt(2 * variance)))
+    return min(logq, math.log(1 - (1 / num_classes)))  # another obvious upper bound
 
 
 def compute_logq_multilabel_pate(labels_votes, sigma):
@@ -167,19 +165,19 @@ def compute_logq_gnmax_counting(votes, sigma, thresholds):
         A scalar upper bound on log(Pr[outcome != S]) where log denotes natural logarithm.
     """
     num_classes = len(votes)
-    variance = sigma ** 2
+    variance = sigma**2
     vector = votes >= thresholds
     gap = votes - thresholds
     logq = _logsumexp(
-        np.concatenate(np.zeros(sum(vector)),
-                       scipy.stats.norm.logsf(gap[vector == 1],
-                                              scale=math.sqrt(variance)) ** (
-                           -1),
-                       scipy.stats.norm.logsf(gap[vector == 0],
-                                              scale=math.sqrt(variance))))
-    return min(logq,
-               math.log(
-                   1 - (1 / 2 ** (num_classes))))  # another obvious upper bound
+        np.concatenate(
+            np.zeros(sum(vector)),
+            scipy.stats.norm.logsf(gap[vector == 1], scale=math.sqrt(variance)) ** (-1),
+            scipy.stats.norm.logsf(gap[vector == 0], scale=math.sqrt(variance)),
+        )
+    )
+    return min(
+        logq, math.log(1 - (1 / 2 ** (num_classes)))
+    )  # another obvious upper bound
 
 
 def compute_rdp_data_independent_gnmax(sigma, orders):
@@ -199,8 +197,9 @@ def compute_rdp_data_independent_gnmax(sigma, orders):
     if sigma < 0 or np.isscalar(orders) or np.any(orders <= 1):
         raise ValueError(
             "'sigma' must be non-negative, 'orders' must be array-like, "
-            "and all elements in 'orders' must be greater than 1!")
-    variance = sigma ** 2
+            "and all elements in 'orders' must be greater than 1!"
+        )
+    variance = sigma**2
     return np.array(orders) / variance
 
 
@@ -228,12 +227,13 @@ def compute_rdp_data_dependent_gnmax(logq, sigma, orders):
         raise ValueError(
             "'logq' must be non-positive, 'sigma' must be non-negative, "
             "'orders' must be array-like, and all elements in 'orders' must be "
-            "greater than 1!")
+            "greater than 1!"
+        )
 
     if np.isneginf(logq):  # deterministic mechanism with sigma == 0
-        return np.full_like(orders, 0., dtype=np.float)
+        return np.full_like(orders, 0.0, dtype=np.float)
 
-    variance = sigma ** 2
+    variance = sigma**2
     orders = np.array(orders)
     rdp_eps = orders / variance  # data-independent bound as baseline
 
@@ -255,13 +255,19 @@ def compute_rdp_data_dependent_gnmax(logq, sigma, orders):
     log_a2 = (rdp_order2 - 1) * rdp_eps2
 
     # Make sure that logq lies in the increasing range and that A is positive.
-    if (np.any(mask) and -logq > rdp_eps2 and logq <= log_a2 - rdp_order2 *
-            (math.log(1 + 1 / (rdp_order1 - 1)) + math.log(
-                1 + 1 / (rdp_order2 - 1)))):
+    if (
+        np.any(mask)
+        and -logq > rdp_eps2
+        and logq
+        <= log_a2
+        - rdp_order2
+        * (math.log(1 + 1 / (rdp_order1 - 1)) + math.log(1 + 1 / (rdp_order2 - 1)))
+    ):
         # Use log1p(x) = log(1 + x) to avoid catastrophic cancellations when x ~ 0.
         log1mq = _log1mexp(logq)  # log1mq = log(1-q)
         log_a = (orders - 1) * (
-                log1mq - _log1mexp((logq + rdp_eps2) * (1 - 1 / rdp_order2)))
+            log1mq - _log1mexp((logq + rdp_eps2) * (1 - 1 / rdp_order2))
+        )
         log_b = (orders - 1) * (rdp_eps1 - logq / (rdp_order1 - 1))
 
         # Use logaddexp(x, y) = log(e^x + e^y) to avoid overflow for large x, y.
@@ -305,12 +311,13 @@ def compute_rdp_data_dependent_gnmax_no_upper_bound(logq, sigma, orders):
         raise ValueError(
             "'logq' must be non-positive, 'sigma' must be non-negative, "
             "'orders' must be array-like, and all elements in 'orders' must be "
-            "greater than 1!")
+            "greater than 1!"
+        )
 
     if np.isneginf(logq):  # deterministic mechanism with sigma == 0
-        return np.full_like(orders, 0., dtype=np.float)
+        return np.full_like(orders, 0.0, dtype=np.float)
 
-    variance = sigma ** 2
+    variance = sigma**2
     orders = np.array(orders)
     rdp_eps = orders / variance  # data-independent bound as baseline
 
@@ -332,13 +339,19 @@ def compute_rdp_data_dependent_gnmax_no_upper_bound(logq, sigma, orders):
     log_a2 = (rdp_order2 - 1) * rdp_eps2
 
     # Make sure that logq lies in the increasing range and that A is positive.
-    if (np.any(mask) and -logq > rdp_eps2 and logq <= log_a2 - rdp_order2 *
-            (math.log(1 + 1 / (rdp_order1 - 1)) + math.log(
-                1 + 1 / (rdp_order2 - 1)))):
+    if (
+        np.any(mask)
+        and -logq > rdp_eps2
+        and logq
+        <= log_a2
+        - rdp_order2
+        * (math.log(1 + 1 / (rdp_order1 - 1)) + math.log(1 + 1 / (rdp_order2 - 1)))
+    ):
         # Use log1p(x) = log(1 + x) to avoid catastrophic cancellations when x ~ 0.
         log1mq = _log1mexp(logq)  # log1mq = log(1-q)
         log_a = (orders - 1) * (
-                log1mq - _log1mexp((logq + rdp_eps2) * (1 - 1 / rdp_order2)))
+            log1mq - _log1mexp((logq + rdp_eps2) * (1 - 1 / rdp_order2))
+        )
         log_b = (orders - 1) * (rdp_eps1 - logq / (rdp_order1 - 1))
 
         # Use logaddexp(x, y) = log(e^x + e^y) to avoid overflow for large x, y.
@@ -374,17 +387,18 @@ def compute_rdp_data_independent_multilabel(sigma, orders, tau, norm):
         raise ValueError(
             "'sigma' must be non-negative, "
             "'orders' must be array-like, and all elements in 'orders' must be "
-            "greater than 1!")
+            "greater than 1!"
+        )
 
     if sigma == 0:  # deterministic mechanism with sigma == 0
-        return np.full_like(orders, 0., dtype=np.float)
+        return np.full_like(orders, 0.0, dtype=np.float)
 
-    variance = sigma ** 2
+    variance = sigma**2
     orders = np.array(orders)
-    if norm == '1':
+    if norm == "1":
         sensitivity = (2 * tau) ** 2
-    elif norm == '2':
-        sensitivity = 2 * tau ** 2
+    elif norm == "2":
+        sensitivity = 2 * tau**2
     else:
         raise Exception(f"Unsupported norm: {norm}.")
     # data-independent bound
@@ -394,8 +408,7 @@ def compute_rdp_data_independent_multilabel(sigma, orders, tau, norm):
     return rdp_eps
 
 
-def is_data_independent_rdp_always_opt_gnmax(num_teachers, num_classes, sigma,
-                                             orders):
+def is_data_independent_rdp_always_opt_gnmax(num_teachers, num_classes, sigma, orders):
     """
     Tests whether data-independent bound is always optimal for the GNMax mechanism.
 
@@ -433,8 +446,7 @@ def compute_logpr_answered(threshold, sigma_threshold, votes):
     Returns:
         The value of log(Pr[answered]) where log denotes natural logarithm.
     """
-    return scipy.stats.norm.logsf(threshold - round(max(votes)),
-                                  scale=sigma_threshold)
+    return scipy.stats.norm.logsf(threshold - round(max(votes)), scale=sigma_threshold)
 
 
 def compute_rdp_data_independent_threshold(sigma, orders):
@@ -453,7 +465,7 @@ def compute_rdp_data_independent_threshold(sigma, orders):
     """
     # The input to the threshold mechanism has sensitivity 1 rather than 2 as
     # compared to the GNMax mechanism, hence the sqrt(2) factor below.
-    return compute_rdp_data_independent_gnmax(2 ** .5 * sigma, orders)
+    return compute_rdp_data_independent_gnmax(2**0.5 * sigma, orders)
 
 
 def compute_rdp_data_dependent_threshold(logpr, sigma, orders):
@@ -474,11 +486,10 @@ def compute_rdp_data_dependent_threshold(logpr, sigma, orders):
     logq = min(logpr, _log1mexp(logpr))
     # The input to the threshold mechanism has sensitivity 1 rather than 2 as
     # compared to the GNMax mechanism, hence the sqrt(2) factor below.
-    return compute_rdp_data_dependent_gnmax(logq, 2 ** .5 * sigma, orders)
+    return compute_rdp_data_dependent_gnmax(logq, 2**0.5 * sigma, orders)
 
 
-def is_data_independent_rdp_always_opt_threshold(num_teachers, t, sigma,
-                                                 orders):
+def is_data_independent_rdp_always_opt_threshold(num_teachers, t, sigma, orders):
     """
     Tests whether data-independent bound is always optimal for the threshold mechanism.
 
@@ -503,15 +514,16 @@ def is_data_independent_rdp_always_opt_threshold(num_teachers, t, sigma,
     rdp_eps_dep2 = compute_rdp_data_dependent_threshold(logpr2, sigma, orders)
 
     rdp_eps_ind = compute_rdp_data_independent_threshold(sigma, orders)
-    return np.logical_and(np.isclose(rdp_eps_dep1, rdp_eps_ind),
-                          np.isclose(rdp_eps_dep2, rdp_eps_ind))
+    return np.logical_and(
+        np.isclose(rdp_eps_dep1, rdp_eps_ind), np.isclose(rdp_eps_dep2, rdp_eps_ind)
+    )
 
 
 def create_orders():
     # RDP orders.
-    orders = np.concatenate((np.arange(2, 100, .5),
-                             np.logspace(np.log10(100), np.log10(1000),
-                                         num=200)))
+    orders = np.concatenate(
+        (np.arange(2, 100, 0.5), np.logspace(np.log10(100), np.log10(1000), num=200))
+    )
     return orders
 
 
@@ -522,9 +534,9 @@ if __name__ == "__main__":
     sigma_gnmax = 40
     t = 300
     delta = 1e-6
-    orders = np.concatenate((np.arange(2, 100, .5),
-                             np.logspace(np.log10(100), np.log10(1000),
-                                         num=200)))
+    orders = np.concatenate(
+        (np.arange(2, 100, 0.5), np.logspace(np.log10(100), np.log10(1000), num=200))
+    )
 
     unanimous_votes = np.array([num_teachers] + [0] * (num_classes - 1))
     logq = compute_logq_gnmax(unanimous_votes, sigma_gnmax)
@@ -532,5 +544,5 @@ if __name__ == "__main__":
     rdp_eps_ind = compute_rdp_data_independent_gnmax(sigma_gnmax, orders)
     dp_eps_dep = rdp_to_dp(orders, rdp_eps_dep, delta)
     dp_eps_ind = rdp_to_dp(orders, rdp_eps_ind, delta)
-    print("dp_eps_dep:", dp_eps_dep)
-    print("dp_eps_ind:", dp_eps_ind)
+    print("(dp_eps_dep, optimal_order):", dp_eps_dep)
+    print("(dp_eps_ind, optimal_order):", dp_eps_ind)

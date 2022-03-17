@@ -7,32 +7,36 @@ import sys
 
 import numpy as np
 
-from .rdp_main import compute_logpr_answered
-from .rdp_main import compute_logq_gnmax
-from .rdp_main import compute_rdp_data_dependent_gnmax
-from .rdp_main import compute_rdp_data_dependent_threshold
-from .rdp_main import rdp_to_dp
+from privacy.pate.rdp_main import compute_logpr_answered
+from privacy.pate.rdp_main import compute_logq_gnmax
+from privacy.pate.rdp_main import compute_rdp_data_dependent_gnmax
+from privacy.pate.rdp_main import compute_rdp_data_dependent_threshold
+from privacy.pate.rdp_main import rdp_to_dp
 
 
 def analyze_multiclass_confident_gnmax(
-        votes: np.ndarray, threshold: float, sigma_threshold: float,
-        sigma_gnmax: float, delta: float, budget: float = None,
-        show_dp_budget: str = 'disable'):
+    votes: np.ndarray,
+    threshold: float,
+    sigma_threshold: float,
+    sigma_gnmax: float,
+    delta: float,
+    budget: float = None,
+    show_dp_budget: str = "disable",
+):
     """
     Analyze how the pre-defined privacy budget will be exhausted when answering
     queries using the Confident GNMax mechanism.
 
     Args:
         votes: a 2-D numpy array of raw ensemble votes, with each row
-        corresponding to a query.
+            corresponding to a query.
         threshold: threshold value (a scalar) in the threshold mechanism.
         sigma_threshold: std of the Gaussian noise in the threshold mechanism.
         sigma_gnmax: std of the Gaussian noise in the GNMax mechanism.
         budget: pre-defined epsilon value for (eps, delta)-DP.
         delta: pre-defined delta value for (eps, delta)-DP.
-        file: for logs.
-        show_dp_budget: show the current cumulative dp budget.
-        args: all args of the program
+        show_dp_budget: flag set when we want to debug the DP budget and show
+            how it changes after each query/sample given in votes.
 
     Returns:
         max_num_query: when the pre-defined privacy budget is exhausted.
@@ -54,16 +58,17 @@ def analyze_multiclass_confident_gnmax(
         idx = np.searchsorted(orders, order_opt)
         rdp_eps_threshold = rdp_eps_threshold_curr[idx]
         rdp_eps_gnmax = rdp_eps_total_curr[idx] - rdp_eps_threshold
-        p = np.array([rdp_eps_threshold, rdp_eps_gnmax,
-                      -math.log(delta) / (order_opt - 1)])
+        p = np.array(
+            [rdp_eps_threshold, rdp_eps_gnmax, -math.log(delta) / (order_opt - 1)]
+        )
         # assert sum(p) == eps
         # Normalize p so that sum(p) = 1
         return p / eps
 
     # RDP orders.
-    orders = np.concatenate((np.arange(2, 100, .5),
-                             np.logspace(np.log10(100), np.log10(1000),
-                                         num=200)))
+    orders = np.concatenate(
+        (np.arange(2, 100, 0.5), np.logspace(np.log10(100), np.log10(1000), num=200))
+    )
     # Number of queries
     n = len(votes)
     # All cumulative results
@@ -82,7 +87,8 @@ def analyze_multiclass_confident_gnmax(
             # logpr - probability that the label is answered.
             logpr = compute_logpr_answered(threshold, sigma_threshold, v)
             rdp_eps_threshold = compute_rdp_data_dependent_threshold(
-                logpr, sigma_threshold, orders)
+                logpr, sigma_threshold, orders
+            )
         else:
             # Do not use the Confident part of the GNMax.
             assert threshold == 0
@@ -90,8 +96,7 @@ def analyze_multiclass_confident_gnmax(
             rdp_eps_threshold = 0
 
         logq = compute_logq_gnmax(v, sigma_gnmax)
-        rdp_eps_gnmax = compute_rdp_data_dependent_gnmax(
-            logq, sigma_gnmax, orders)
+        rdp_eps_gnmax = compute_rdp_data_dependent_gnmax(logq, sigma_gnmax, orders)
         rdp_eps_total = rdp_eps_threshold + np.exp(logpr) * rdp_eps_gnmax
         # Evaluate E[(rdp_eps_threshold + Bernoulli(pr) * rdp_eps_gnmax)^2]
         # Update current cumulative results.
@@ -108,9 +113,9 @@ def analyze_multiclass_confident_gnmax(
             break
         else:
             max_num_query = i + 1
-        if show_dp_budget == 'apply':
-            file = f'queries_answered_privacy_budget.txt'
-            with open(file, 'a') as writer:
+        if show_dp_budget == "apply":
+            file = f"queries_answered_privacy_budget.txt"
+            with open(file, "a") as writer:
                 if i == 0:
                     header = "queries answered,privacy budget"
                     print(header)
@@ -118,11 +123,17 @@ def analyze_multiclass_confident_gnmax(
                 info = f"{answered_curr},{dp_eps[i]}"
                 print(info)
                 writer.write(f"{info}\n")
-                msg = 'Number of queries: {} | E[answered]: {:.3f} |' \
-                      ' E[eps] at order {:.3f}: {:.4f} ' \
-                      '(contribution from delta: {:.4f})'.format(
-                    i + 1, answered_curr, order_opt[i], dp_eps[i],
-                    -math.log(delta) / (order_opt[i] - 1))
+                msg = (
+                    "Number of queries: {} | E[answered]: {:.3f} |"
+                    " E[eps] at order {:.3f}: {:.4f} "
+                    "(contribution from delta: {:.4f})".format(
+                        i + 1,
+                        answered_curr,
+                        order_opt[i],
+                        dp_eps[i],
+                        -math.log(delta) / (order_opt[i] - 1),
+                    )
+                )
                 print(msg)
                 writer.write(msg)
                 sys.stdout.flush()
